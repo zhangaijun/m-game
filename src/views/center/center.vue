@@ -1,52 +1,62 @@
 <template>
   <div class="center">
     <NavigationBar />
-    <!-- <div class="center-top">
-      <div class="center-top-back" @click="$router.go(-1)"></div>
-      <div class="center-top-share" @click="goShare"></div>
-    </div> -->
+    <PlayIcon />
     <div class="center-title">
       <div class="center-title-top">《智慧生活启示录》</div>
       <div class="center-title-btm">终极密卷</div>
     </div>
     <div class="center-tag">
-      <div class="center-tag-ruler">规则</div>
-      <div class="center-tag-record"><div style="transform:rotate(180deg);">PK战绩</div></div>
+      <div class="center-tag-ruler" @click="showToast = true">规则</div>
+      <div class="center-tag-record"><div style="transform:rotate(180deg);" @click="findRecentRecord">PK战绩</div></div>
     </div>
-    <div class="center-model">
+    <div class="center-model" v-if="!showToast">
       <div class="center-model-top" @click="handleStart(0)">
-        <div class="center-model-top-text"></div>
       </div>
       <div>
         *仅供到店打本玩家体验
       </div>
       <div class="center-model-btm" @click="handleStart(1)">
-        <div class="center-model-btm-text"></div>
       </div>
       <div>
        *可供线上玩家体验尝鲜
       </div>
     </div>
+
+    <popup :show="showToast" @handleHidden="showToast = false" :type="3"></popup>
+    <popup-inquiry :show.sync="showInquiry" :mode="mode" @handleConfirm="handleConfirm"></popup-inquiry>
   </div>
 </template>
 
 <script>
 import NavigationBar from '../../components/navigationBar.vue'
+import popup from "../../components/popup/popup"
+import PlayIcon from '../../components/playIcon.vue'
+import popupInquiry from "../../components/popup/popupInquiry"
 
 export default {
   name: "center",
 
   components: {
     [NavigationBar.name]: NavigationBar,
+    popupInquiry,
+    popup,
+    PlayIcon
   },
   data(){
     return{
       mode: 0,
+      showToast: false,
+      showInquiry: false,
     }
   },
   methods:{
     handleStart(num){
       this.mode = num
+      this.showInquiry = true
+    },
+
+    handleConfirm() {
       if (this.mode){
         this.$router.push({
           path: '/chooseGroup',
@@ -62,6 +72,17 @@ export default {
           }
         })
       }
+    },
+
+    findRecentRecord() {
+      this.$router.push(
+        {
+          path: '/gameOver',
+          query: {
+            record: true
+          }
+        }
+      )
     }
   }
 }
@@ -71,32 +92,13 @@ export default {
 .center {
   width: 100%;
   height: 100vh;
-  background: url("../../assets/pageGround/page4.jpg") no-repeat;
+  background: url("../../assets/imgs/game/bg_2.png") no-repeat;
   background-size: 100% 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-top: 100px;
   overflow: hidden;
-  &-top{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4% 10%;
-    &-back{
-      width: 70px;
-      height: 70px;
-      background: url("../../assets/icon/back.png") no-repeat;
-      background-size: 100% 100%;
-    }
-    &-share{
-      width: 70px;
-      height: 70px;
-      background: url("../../assets/icon/share.png") no-repeat;
-      background-size: 100% 100%;
-    }
-  }
   &-title{
     width: 100%;
     text-align: center;
@@ -117,6 +119,8 @@ export default {
     margin-top: 30px;
     justify-content: space-between;
     &-ruler{
+      position: relative;
+      left: -20px;
       width: 200px;
       height: 70px;
       background: url("../../assets/icon/tag.png") no-repeat;
@@ -128,6 +132,8 @@ export default {
       text-align: center;
     }
     &-record{
+      position: relative;
+      right: -20px;
       line-height: 70px;
       width: 200px;
       height: 70px;
@@ -151,27 +157,27 @@ export default {
     &-top{
       width: 70%;
       height: 260px;
-      background: url("../../assets/button/button4.png") no-repeat;
+      background: url("../../assets/button/button3.png") no-repeat;
       background-size: 100% 100%;
-      &-text{
-        width: 100%;
-        height: 100%;
-        background: url("../../assets/button/button3.png") no-repeat;
-        background-size: 100% 100%;
-      }
+      // &-text{
+      //   width: 100%;
+      //   height: 100%;
+      //   background: url("../../assets/button/button3.png") no-repeat;
+      //   background-size: 100% 100%;
+      // }
     }
     &-btm{
       width: 70%;
       height: 260px;
-      background: url("../../assets/button/button5.png") no-repeat;
+      background: url("../../assets/button/button2.png") no-repeat;
       background-size: 100% 100%;
       margin-top: 30px;
-      &-text{
-        width: 100%;
-        height: 100%;
-        background: url("../../assets/button/button2.png") no-repeat;
-        background-size: 100% 100%;
-      }
+      // &-text{
+      //   width: 100%;
+      //   height: 100%;
+      //   background: url("../../assets/button/button2.png") no-repeat;
+      //   background-size: 100% 100%;
+      // }
     }
   }
 }

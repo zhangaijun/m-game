@@ -1,10 +1,7 @@
 <template>
   <div class="start" :class=" pageType === 1 ?'model1':'model2'">
     <NavigationBar />
-    <!-- <div class="start-top">
-      <div class="start-top-back" @click="$router.go(-1)"></div>
-      <div class="start-top-share"></div>
-    </div> -->
+    <PlayIcon />
     <div class="start-title">
       <div class="start-title-hide" v-if="showTitleHide">三翼鸟沉浸式剧本游戏</div>
       <div class="start-title-top">《智慧生活启示录》</div>
@@ -17,19 +14,20 @@
 
 <script>
 import NavigationBar from '../../components/navigationBar.vue'
-import popupInquiry from "../../components/popup/popupInquiry";
-import popupFlowPath from "../../components/popup/popupFlowPath";
+import popupInquiry from "../../components/popup/popupInquiry"
+import popupFlowPath from "../../components/popup/popupFlowPath"
+import PlayIcon from '../../components/playIcon.vue'
 import * as request from '../../api/service/game'
 export default {
   name: "volumeOneStart",
-  components:{popupInquiry,popupFlowPath,NavigationBar},
+  components:{popupInquiry,popupFlowPath,NavigationBar,PlayIcon},
   data(){
     return{
-      showInquiry:true,
-      showFlowPath:false,
+      showInquiry:false,
+      showFlowPath:true,
       popupText:"",
       showTitleHide:false,
-      pageType:1,
+      pageType:2,
       pageTypeList:{
         title:'输入房间号',
         input:true,
@@ -50,7 +48,7 @@ export default {
       if (this.pageType === 2){
         if (e.type === 'warring'){
           this.pageTypeList={
-            title:'输入房间号',
+            title:'请输入房间号',
             input:true,
             text:'',
             btnText:'确定',
@@ -69,15 +67,6 @@ export default {
           return false
         }else{
           this.getRoom(e.inputText)
-          // this.pageType = 3
-          // this.pageTypeList={
-          //   title:'',
-          //   input:false,
-          //   text:['短暂的体验已经结束~','点击预约，Get四维世界','同款家生活吧！'],
-          //   btnText:'立即预约',
-          //   pageState:''
-          // }
-          // return false
         }
       }
       if (this.pageType === 3) {
@@ -100,7 +89,13 @@ export default {
       }
       request.getRoom(params).then(res => {
         if (!res.data.success) {
-          console.log(res.data.error)
+          this.pageTypeList={
+            title:'警告',
+            input:false,
+            text: [res.data.error],
+            btnText:'确定',
+            pageState:'warring'
+          }
           return
         }
 
@@ -113,12 +108,10 @@ export default {
             btnText:'确定',
             pageState:'warring'
           }
-          // console.log('当前房间号人数已满，请输入其他房间号')
           return
         }
 
         if ((data.consNumber >= data.consLimit && this.$route.query.type === '1') || (data.prosNumber >= data.prosLimit && this.$route.query.type === '0')) {
-          // console.log('手速慢啦，该阵营人数已满')
           this.pageTypeList={
             title:'警告',
             input:false,
@@ -129,9 +122,6 @@ export default {
           return
         }
         
-        // 车队创建人
-        // this.createNumberId = data.memberId
-        // this.roomId = data.id
         this.$router.push({
           path: '/chooseGroup',
           query: {
@@ -149,10 +139,10 @@ export default {
 
 <style lang="scss" scoped>
 .model1{
-  background: url("../../assets/pageGround/page4.jpg") no-repeat;
+  background: url("../../assets/imgs/game/bg_2.png") no-repeat;
 }
 .model2{
-  background: url("../../assets/pageGround/page3.jpg") no-repeat;
+  background: url("../../assets/imgs/game/bg_1.png") no-repeat;
 }
 .start {
   width: 100%;
@@ -163,25 +153,6 @@ export default {
   align-items: center;
   padding-top: 100px;
   overflow: hidden;
-  &-top{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4% 10% 0;
-    &-back{
-      width: 70px;
-      height: 70px;
-      background: url("../../assets/icon/back.png") no-repeat;
-      background-size: 100% 100%;
-    }
-    &-share{
-      width: 70px;
-      height: 70px;
-      background: url("../../assets/icon/share.png") no-repeat;
-      background-size: 100% 100%;
-    }
-  }
   &-title{
     width: 100%;
     text-align: center;
@@ -200,67 +171,6 @@ export default {
       font-size: 50px;
       color: #93FFFF;
       font-weight: 500;
-    }
-  }
-  &-tag{
-    width: 100%;
-    display: flex;
-    margin-top: 30px;
-    justify-content: space-between;
-    &-ruler{
-      width: 200px;
-      height: 70px;
-      background: url("../../assets/icon/tag.png") no-repeat;
-      background-size: 100% 100%;
-      font-size: 30px;
-      color: white;
-      transform: translateX(-10px);
-      line-height: 70px;
-    }
-    &-record{
-      line-height: 70px;
-      width: 200px;
-      height: 70px;
-      font-size: 30px;
-      color: white;
-      background: url("../../assets/icon/tag.png") no-repeat;
-      background-size: 100% 100%;
-      transform: translateX(10px) rotate(180deg);
-    }
-  }
-
-  &-model{
-    width: 100%;
-    margin-top: 30px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 16px;
-    color: white;
-    &-top{
-      width: 70%;
-      height: 200px;
-      background: url("../../assets/button/button4.png") no-repeat;
-      background-size: 100% 100%;
-      &-text{
-        width: 100%;
-        height: 100%;
-        background: url("../../assets/button/button3.png") no-repeat;
-        background-size: 100% 100%;
-      }
-    }
-    &-btm{
-      width: 70%;
-      height: 200px;
-      background: url("../../assets/button/button5.png") no-repeat;
-      background-size: 100% 100%;
-      margin-top: 30px;
-      &-text{
-        width: 100%;
-        height: 100%;
-        background: url("../../assets/button/button2.png") no-repeat;
-        background-size: 100% 100%;
-      }
     }
   }
 }

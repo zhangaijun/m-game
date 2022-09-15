@@ -2,6 +2,7 @@ import UplusApi from '@uplus/uplus-api'
 
 const instance = new UplusApi()
 instance.initDeviceReady()
+const ua = navigator.userAgent
 
 export default {
   // 判断用户是否登录
@@ -111,4 +112,34 @@ export default {
     },false)
     document.head.appendChild(s)
   },
+
+  // 数组乱序
+  shuffle(arr) {
+    for (let i = arr.length; i; i--) {
+      let j = Math.floor(Math.random() * i)
+      const tab = arr[i - 1]
+      arr[i - 1] = arr[j]
+      arr[j] = tab
+    }
+    return arr;
+  },
+
+  isAndroid() {
+    return ua.indexOf('Android') > -1
+  },
+
+  // 随机数组
+getRandomArray(arr, count) {
+  let shuffled = arr.slice(0)
+  let i = arr.length
+  let min = i - count
+  let temp, index;
+  while (i-- > min) {
+    index = Math.floor((i + 1) * Math.random());
+    temp = shuffled[index];
+    shuffled[index] = shuffled[i];
+    shuffled[i] = temp;
+  }
+  return shuffled.slice(min);
+}
 }

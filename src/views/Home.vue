@@ -1,5 +1,7 @@
 <template>
   <div class="home">
+    <NavigationBar v-if="isApp" :isBack="false" @goBack="goBack" />
+    <PlayIcon />
     <transition>
       <div class="home-first" v-if="pageState" @click="pageState = 0">
         <div class="home-first-text" :style="{'top':top}">
@@ -27,11 +29,11 @@
           <div class="home-second-textIcon3"></div>
           <div class="home-second-textIcon"></div>
           <div class="home-second-ruler">
-            <van-checkbox checked-color="none" v-model="checked" shape="square" style="margin-right: 3px" icon-size="10px"></van-checkbox>
+            <van-checkbox checked-color="none" v-model="checked" shape="square" style="margin: 0 8px" icon-size="13px"></van-checkbox>
             <span>已同意</span>
             <span style="text-decoration:underline" @click="handleRuler">活动规则</span>
           </div>
-          <div class="home-second-button" id="download-btn" @click="handOpen">开启终级之战</div>
+          <div class="home-second-button" id="download-btn" @click="handOpen">开启终极之战</div>
         </div>
     </transition>
     <popup :show="showToast" @handleHidden="handleHidden" :text="popupText" :type="popupType"></popup>
@@ -41,6 +43,8 @@
 <script>
 import util from '../util/util'
 import popup from "../components/popup/popup"
+import NavigationBar from '../components/navigationBar.vue'
+import PlayIcon from '../components/playIcon.vue'
 import UplusApi from '@uplus/uplus-api'
 
 const instance = new UplusApi()
@@ -59,7 +63,7 @@ export default {
       isRedy: false
     }
   },
-  components:{popup},
+  components:{popup, NavigationBar, PlayIcon},
   mounted() {
     this.init()
   },
@@ -69,6 +73,9 @@ export default {
     }
   },
   methods:{
+    goBack() {
+      util.goToPage('https://sybird.haier.com/sybirdapp/home/index.html')
+    },  
     init(){
       let textRun = setInterval(()=>{
         this.top = this.top.slice(0, this.top.length - 1) - 0.1 + '%'
@@ -95,20 +102,22 @@ export default {
           instance.initDeviceReady().then(() => {
             instance.upUserModule.getUserInfo().then((result) => {
               if (result.retCode === '000000') {
+                if (!result.retData.userId) {
+                  util.goToPage('mpaas://usercenter')
+                  return
+                }
                 this.$store.dispatch('setToken', result.retData.user_center_access_token)
                 this.$store.dispatch('setUserInfo', result.retData)
                 this.$store.dispatch('setUserId', result.retData.userId)
                 this.$store.dispatch('setNickname', result.retData.phoneNumber)
                 this.$store.dispatch('setAvatar', result.retData.avatar)
-                // this.$router.push('/center')
-                this.$router.push('/start')
+                this.$router.push('/center')
               }
             }).catch(e => { console.log(e) })
           }).catch(e => { console.log(e) })
         }
       }
-
-      this.$router.push('/center')
+      // this.$router.push('/center')
     },
     handleRuler(){
       this.popupType = 2
@@ -125,7 +134,7 @@ export default {
      * @param {*} Openinstall H5
      * @param {*} id  不能为空
      */
-   openInstall(id, targetUrl = location.href) {
+   openInstall(id) {
     this.isRedy = true
     let that = this
     const s = document.createElement('script')
@@ -135,9 +144,10 @@ export default {
       let data = OpenInstall.parseUrlParams()//openinstall.js中提供的工具函数，解析url中的所有查询参数
       data = {
         ...data,
-        targetUrl: targetUrl + '&browerFirstIn=0',
+        targetUrl: process.NODE_ENV !== 'production' ? 'https://yx.rrskjfw.com.cn/' : 'https://syn.rrskjfw.com.cn/',
         type: 'launchToPage'
       }
+      console.log('-=-=-=-=-=', data.targetUrl)
       new OpenInstall({
         /*appKey必选参数，openinstall平台为每个应用分配的ID*/
         appKey: "f7x9re",
@@ -145,7 +155,7 @@ export default {
         onready: function() {
           let m = this
           let button = document.getElementById(id)
-
+          
           /*在app已安装的情况尝试拉起app*/
           m.schemeWakeup()
           /*用户点击某个按钮时(假定按钮id为downloadButton)，安装app*/
@@ -178,8 +188,9 @@ export default {
 .home {
   width: 100%;
   height: 100vh;
-  background: url("../assets/pageGround/page1.jpg") no-repeat;
+  background: url("https://rrskj.oss-cn-qingdao.aliyuncs.com/syn/page1.jpg") no-repeat;
   background-size:100% 100%;
+
   &-first {
     position: relative;
     top: 20%;
@@ -241,16 +252,17 @@ export default {
     }
     &-ruler{
       position: absolute;
-      top: 70%;
+      top: 69%;
       left: 50%;
       transform: translateX(-50%);
       width: 100%;
-      height: 20px;
+      height: 50px;
+      line-height: 50px;
       display: flex;
       justify-content: center;
       align-items: center;
       color: #5BE6FF;
-      font-size: 14px;
+      font-size: 16px;
     }
     &-button{
       position: absolute;
@@ -278,7 +290,9 @@ export default {
 }
 
 ::v-deep .van-checkbox__icon .van-icon{
-  line-height: 1em;
+  // line-height: 40px;
+  // width: 20px;
+  // height: 20px;
   background-color: rgba(100,100,100,0);
 }
 </style>

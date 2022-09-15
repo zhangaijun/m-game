@@ -1,7 +1,8 @@
 <template>
-  <div class="prepare-page">
+  <div :class="['prepare-page', mode === '1' && 'small-prepare-page']">
     <img class="bg" src="../../assets/imgs/game/bg_2.png" />
     <NavigationBar :isBack="false" @goBack="goBack" />
+    <PlayIcon />
     <div class="title">
       <p class="title-top">《智慧生活启示录》</p>
       <p class="title-bottom">终极密卷</p>
@@ -10,11 +11,11 @@
     <div class="time">
       <img class="time-bg" src="../../assets/imgs/game/title_bg.png" />
       <span class="time-left">拥护AI阵营</span>
-      <span class="time-content">{{ time ? `00 : 0${ time }` : '' }}</span>
+      <span class="time-content">{{ time ? `00 : ${ time > 9 ? time : '0' + time }` : '' }}</span>
       <span class="time-right">反AI阵营</span>
     </div>
 
-    <div class="content-big">
+    <div class="content-big" v-if="mode === '0'">
       <img class="content-bg" src="../../assets/imgs/game/content_bg.png" />
       <img class="content-vs" src="../../assets/imgs/game/vs.png" />
 
@@ -22,6 +23,9 @@
         <div class="content-item" v-for="item in prosList" :key="item.memberId">
           <div class="item-img">
             <img class="img-bg" src="../../assets/imgs/game/img_bg_1.png" />
+            <img class="img" v-if="item.avatar == 1" src="../../assets/imgs/game/pros_img_1.jpg" />
+            <img class="img" v-if="item.avatar == 2" src="../../assets/imgs/game/pros_img_2.jpg" />
+            <img class="img" v-if="item.avatar == 3" src="../../assets/imgs/game/pros_img_3.jpg" />
             <div v-if="!item.status" class="shadow"></div>
           </div>
           <div class="item-name">{{ item.memberName }}</div>
@@ -39,6 +43,9 @@
         <div class="content-item" v-for="item in consList" :key="item.memberId">
           <div class="item-img">
             <img class="img-bg" src="../../assets/imgs/game/img_bg_1.png" />
+            <img class="img" v-if="item.avatar == 1" src="../../assets/imgs/game/cons_img_1.jpg" />
+            <img class="img" v-if="item.avatar == 2" src="../../assets/imgs/game/cons_img_2.jpg" />
+            <img class="img" v-if="item.avatar == 3" src="../../assets/imgs/game/cons_img_3.jpg" />
             <div v-if="!item.status" class="shadow"></div>
           </div>
           <div class="item-name">{{ item.memberName }}</div>
@@ -53,7 +60,7 @@
       </div>
     </div>
 
-    <!-- <div class="content-small">
+    <div class="content-small" v-if="mode === '1'">
       <img class="content-bg" src="../../assets/imgs/game/content_bg_2.png" />
       <img class="content-vs" src="../../assets/imgs/game/vs.png" />
 
@@ -61,7 +68,9 @@
         <div class="content-item" v-for="item in prosList" :key="item.memberId">
           <div class="item-img">
             <img class="img-bg" src="../../assets/imgs/game/img_bg_1.png" />
-            <div v-if="!item.status" class="shadow"></div>
+            <img class="img" v-if="item.avatar == 1" src="../../assets/imgs/game/pros_img_1.jpg" />
+            <img class="img" v-if="item.avatar == 2" src="../../assets/imgs/game/pros_img_2.jpg" />
+            <img class="img" v-if="item.avatar == 3" src="../../assets/imgs/game/pros_img_3.jpg" />
           </div>
           <div class="item-name">{{ item.memberName }}</div>
         </div>
@@ -78,7 +87,9 @@
         <div class="content-item" v-for="item in consList" :key="item.memberId">
           <div class="item-img">
             <img class="img-bg" src="../../assets/imgs/game/img_bg_1.png" />
-            <div v-if="!item.status" class="shadow"></div>
+            <img class="img" v-if="item.avatar == 1" src="../../assets/imgs/game/cons_img_1.jpg" />
+            <img class="img" v-if="item.avatar == 2" src="../../assets/imgs/game/cons_img_2.jpg" />
+            <img class="img" v-if="item.avatar == 3" src="../../assets/imgs/game/cons_img_3.jpg" />
           </div>
           <div class="item-name">{{ item.memberName }}</div>
         </div>
@@ -90,12 +101,14 @@
           <div class="item-name">等待中...</div>
         </div>
       </div>
-    </div> -->
+    </div>
 
-    <div class="btn-group">
-      <div class="btn" @click="prepare">
+    <p class="info" v-if="showInfo">尚有玩家未加入，请等待...</p>
+
+    <div :class="['btn-group', mode === '1' && 'btn-group2']">
+      <div class="btn" @click="prepare" v-if="mode === '0'">
         <img class="btn-bg" src="../../assets/imgs/common/small_btn.png" />
-        <span class="btn-text">准备开始</span>
+        <span class="btn-text">{{ isPrepare ? '已准备' : '准备开始' }}</span>
       </div>
 
       <div class="btn" @click="quite">
@@ -103,11 +116,15 @@
         <span class="btn-text">退出</span>
       </div>
     </div>
+
+    <ErrorDialog :show.sync="errorShow" :text="errorText"></ErrorDialog>
   </div>
 </template>
 
 <script>
 import NavigationBar from '../../components/navigationBar.vue'
+import ErrorDialog from '../../components/errorDialog.vue'
+import PlayIcon from '../../components/playIcon.vue'
 import * as request from '../../api/service/game'
 import Url from '../../api/url'
 
@@ -116,10 +133,13 @@ export default {
 
   components: {
     [NavigationBar.name]: NavigationBar,
+    ErrorDialog,
+    PlayIcon
   },
 
   data() {
     return {
+      mode: this.$route.query.mode,
       time: 0,
       interval: null,
       isPrepare: false,
@@ -127,7 +147,12 @@ export default {
       prosList: [], // 拥护阵营
       isInit: true, // 是否在当前页面
       lockReconnect: false,//是否真正建立连接
-      sendFixHeartTimer: null
+      sendFixHeartTimer: null,
+      prosImg: [1, 2, 3],
+      consImg: [1, 2, 3],
+      errorText: '',
+      errorShow: false,
+      haveRobot: false
     }
   },
 
@@ -136,12 +161,23 @@ export default {
     this.initWebSocket()
     this.initRoomMember()
     this.isInit = true
-    // this.heartCheckFun()
+    if (this.mode === '1') this.countdown(30)
   },
 
   destroyed() {
+    console.log('-=-=-=-=-=离开')
     // 离开页面生命周期函数
     this.reset()
+  },
+
+  computed: {
+    showInfo() {
+      if (this.mode === '0') {
+        return this.isPrepare && (this.consList.length + this.prosList.length < 6)
+      } else {
+        return !this.consList.length || !this.prosList.length
+      }
+    }
   },
 
   methods: {
@@ -154,41 +190,84 @@ export default {
       if (this.interval) clearInterval(this.interval)
       this.interval = setInterval(() => {
         this.time--
+        
+        if (this.time === 15) {
+          this.robotJoin()
+        }
 
         if (this.time <= 0) {
-          this.websocketOnclose()
           clearInterval(this.interval)
-
-          this.$router.push({
-            path: '/answer',
-            query: {
-              roomId: this.$route.query.roomId,
-              userId: this.$store.getters['getUserId'],
-              type: this.$route.query.type
-            }
-          })
+          this.goTo()
         }
       }, 1000)
     },
+
+    goTo() {
+      this.$store.dispatch('setConsList', this.consList)
+      this.$store.dispatch('setProsList', this.prosList)
+      this.reset()
+      this.$router.push({
+        path: '/answer',
+        query: {
+          roomId: this.$route.query.roomId,
+          userId: this.$store.getters['getUserId'],
+          type: this.$route.query.type,
+          haveRobot: this.haveRobot ? 1 : 0,
+          mode: this.$route.query.mode
+        }
+      })
+    },
+
     // 获取房间人数
     initRoomMember() {
       request.initRoomMember({ roomId: this.$route.query.roomId }).then(res => {
         if (!res.data.success) {
-          console.log(res.data.error)
+          this.errorText = res.data.error
+          this.errorShow = true
+          clearInterval(this.interval)
           return
         }
-
+      
         const data = res.data.result
         data.forEach(item => {
           if (item.type) {
+            item.avatar = item.avatar || this.consImg[this.consList.length]
             this.consList.push(item)
           } else {
+            item.avatar = item.avatar || this.prosImg[this.prosList.length]
             this.prosList.push(item)
           }
         })
+
+        if (this.mode === '1' && this.consList.length && this.prosList.length) {
+          // this.countdown(5)
+          clearInterval(this.interval)
+          this.goTo()
+          this.isPrepare = true
+        }
       }).catch(() => {
-        console.log('网络异常，请稍后重试')
+        this.errorText = '网络异常，请稍后重试'
+        this.errorShow = true
+        clearInterval(this.interval)
       })  
+    },
+
+    robotJoin() {
+      const params = {
+        roomId: this.$route.query.roomId,
+        type: this.$route.query.type === '0' ? 1 : 0
+      }
+
+      request.robotJoin(params).then(res => {
+        if (!res.data.success) {
+          this.errorText = res.data.error
+          this.errorShow = true
+          return
+        }
+      }).catch(() => {
+        this.errorText = '网络异常，请稍后重试'
+        this.errorShow = true
+      })
     },
 
     prepare() {
@@ -200,12 +279,20 @@ export default {
       }
       request.doPrepare(params).then(res => {
         if (!res.data.success) {
-          console.log(res.data.error)
+          this.errorText = res.data.error
+          this.errorShow = true
           return
         }
-        
+        this.isPrepare = true
+        // this.prosList.forEach(child => {
+        //   if (child.memberId == this.$store.getters['getUserId']) this.$set(child, 'status', item.status)
+        // })
+        // this.consList.forEach(child => {
+        //   if (child.memberId == this.$store.getters['getUserId']) this.$set(child, 'status', item.status)
+        // })
       }).catch(() => {
-        console.log('网络异常，请稍后重试')
+        this.errorText = '网络异常，请稍后重试'
+        this.errorShow = true
       })
     },
 
@@ -219,18 +306,19 @@ export default {
       }
       request.outCamp(params).then(res => {
         if (!res.data.success) {
-          console.log(res.data.error)
+          this.errorText = res.data.error
+          this.errorShow = true
           return
         }
         this.$router.go(-1)
         this.reset()
       }).catch(() => {
-        console.log('网络异常，请稍后重试')
+        this.errorText = '网络异常，请稍后重试'
+        this.errorShow = true
       })
     },
 
     initWebSocket() {
-      // console.log("开始WebSocket连接...")
       // WebSocket与普通的请求所用协议有所不同，ws等同于http，wss等同于https
       var userId = this.$store.getters['getUserId']
       if (userId && !this.lockReconnect) {
@@ -249,13 +337,10 @@ export default {
       this.heartCheckFun()
       console.log('WebSocket连接成功')
     },
-    websocketOnerror() {
-      console.log('websocket-=-=-===error')
-      this.lockReconnect = false
-      this.reconnect()
+    websocketOnerror(e) {
     },
-    websocketOnclose() {
-      console.log('websocket-=-=-===close')
+    websocketOnclose(e) {
+      console.log('websocket-=-=-===close', e)
       this.lockReconnect = false
       this.reconnect()
     },
@@ -277,58 +362,104 @@ export default {
       }, 10000)
     },
     websocketOnmessage(msg) {
+      if (!this.isInit) return
       this.lockReconnect = true
       const data = JSON.parse(msg.data)
       console.log('websocket-=-=-=-=-=data', data)
-      
-      // 加入阵营
-      if (data.flag === 'join') {
-        const list1 = this.prosList.filter(item => item.memberId === data.memberId)
-        const list2 = this.consList.filter(item => item.memberId === data.memberId)
-        if (!data.camp) {
-          if (list1.length) this.prosList = this.prosList.filter(item => item.memberId !== data.memberId)
-          this.prosList.push({
-            memberId: data.memberId,
-            memberName: data.memberName,
-            status: data.status,
-            type: data.camp,
-            roomId: data.roomId
+
+      if (data.flag === 'prepare') { // 准备
+        data.detail.forEach(item => {
+          const list1 = this.prosList.filter(it => it.memberId == item.memberId)
+          const list2 = this.consList.filter(it => it.memberId == item.memberId)
+          this.prosList.forEach(child => {
+            if (child.memberId === item.memberId) this.$set(child, 'status', item.status)
           })
-        } else {
-          if (list2.length) this.consList = this.consList.filter(item => item.memberId !== data.memberId)
-          this.consList.push({
-            memberId: data.memberId,
-            memberName: data.memberName,
-            status: data.status,
-            type: data.camp,
-            roomId: data.roomId
+          this.consList.forEach(child => {
+            if (child.memberId === item.memberId) this.$set(child, 'status', item.status)
           })
-        }
-      } else if (data.flag === 'out') { // 退出阵营
-        this.prosList = this.prosList.filter(item => item.memberId !== data.memberId)
-        this.consList = this.consList.filter(item => item.memberId !== data.memberId)
-        // this.prosList.forEach((item, index) => {
-        //   if (item.memberId === data.memberId) this.prosList.splice(index, 1, '')
-        // })
-      } else if (data.flag === 'prepare') { // 准备
-        if (data.memberId == this.$store.getters['getUserId']) this.isPrepare = true
-        this.prosList.forEach(item => {
-          if (item.memberId === data.memberId) this.$set(item, 'status', 1)
+
+          if (!list1.length && !item.camp) {
+            const imgList = this.prosList.map(item => item.avatar)
+            const prosImg = this.prosImg.filter(item => !imgList.includes(item))
+            this.prosList.push({
+              memberId: item.memberId,
+              memberName: item.memberName,
+              status: item.status,
+              type: item.camp,
+              roomId: item.roomId,
+              avatar: item.avatar || prosImg[0]
+            })
+          }
+          if (!list2.length && item.camp) {
+            const imgList = this.consList.map(item => item.avatar)
+            const consImg = this.consImg.filter(item => !imgList.includes(item))
+            this.consList.push({
+              memberId: item.memberId,
+              memberName: item.memberName,
+              status: item.status,
+              type: item.camp,
+              roomId: item.roomId,
+              avatar: item.avatar || consImg[0]
+            })
+          }
         })
-        this.consList.forEach(item => {
-          if (item.memberId === data.memberId) this.$set(item, 'status', 1)
+        
+
+        if (this.mode === '0' && data.prepareNumber >= 6) this.goTo()
+      } else { // 加入退出阵营
+        data.forEach(item => {
+          const list1 = this.prosList.filter(it => it.memberId == item.memberId)
+          const list2 = this.consList.filter(it => it.memberId == item.memberId)
+          if (item.haveRobot) this.haveRobot = true
+
+          if (!list1.length && !list2.length) {
+            if (item.camp) {
+              const imgList = this.consList.map(item => item.avatar)
+              const consImg = this.consImg.filter(item => !imgList.includes(item))
+              this.consList.push({
+                memberId: item.memberId,
+                memberName: item.memberName,
+                status: item.status,
+                type: item.camp,
+                roomId: item.roomId,
+                avatar: item.avatar || consImg[0],
+                haveRobot: item.haveRobot
+              })
+            }
+            if (!item.camp) {
+              const imgList = this.prosList.map(item => item.avatar)
+              const prosImg = this.prosImg.filter(item => !imgList.includes(item))
+              this.prosList.push({
+                memberId: item.memberId,
+                memberName: item.memberName,
+                status: item.status,
+                type: item.camp,
+                roomId: item.roomId,
+                avatar: item.avatar || prosImg[0],
+                haveRobot: item.haveRobot
+              })
+            }
+          }
+        })
+        
+        this.prosList.forEach(item => {
+          const list = data.filter(it => it.memberId === item.memberId)
+          if (!list.length) this.prosList = this.prosList.filter(it => it.memberId !== item.memberId)
         })
 
-        if (data.prepareNumber >= 6) {
-          this.$store.dispatch('setConsList', this.consList)
-          this.$store.dispatch('setProsList', this.prosList)
-          this.countdown(5)
-          this.reset()
+        this.consList.forEach(item => {
+          const list = data.filter(it => it.memberId === item.memberId)
+          if (!list.length) this.consList = this.consList.filter(it => it.memberId !== item.memberId)
+        })
+
+        if (this.$route.query.mode === '1' && data.length >= 2) {
+          // this.countdown(5)
+          this.goTo()
+          this.isPrepare = true
         }
       }
       
       this.heartCheckFun()
-      console.log('-=-=-=-=-=-321', this.prosList, this.consList)
     },
 
     heartCheckFun() {
@@ -363,6 +494,7 @@ export default {
     top: 0;
     left: 0;
     width: 750px;
+    min-height: 100%;
   }
 
   .title {
@@ -468,13 +600,22 @@ export default {
             width: 171px;
           }
 
+          .img {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 130px;
+            height: 127px;
+            border-radius: 50%;
+          }
+
           .shadow {
             position: absolute;
             top: 20px;
             left: 20px;
             width: 130px;
             height: 127px;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.6);
             border-radius: 50%;
           }
         }
@@ -493,23 +634,23 @@ export default {
 
   .content-small {
     position: relative;
-    margin: 40px 22px 0 22px;
-    padding: 50px 55px 0 55px;
-    height: 730px;
+    padding: 80px 77px 0 77px;
+    height: 600px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 
     .content-bg {
       position: absolute;
       top: 0;
-      left: 0;
-      width: 706px;
+      left: -44px;
+      width: 860px;
     }
 
     .content-vs {
       position: absolute;
-      top: 140px;
-      left: 176px;
+      top: 180px;
+      left: 190px;
       width: 354px;
     }
 
@@ -534,6 +675,15 @@ export default {
             width: 171px;
           }
 
+          .img {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 130px;
+            height: 127px;
+            border-radius: 50%;
+          }
+
           .shadow {
             position: absolute;
             top: 20px;
@@ -555,6 +705,15 @@ export default {
         }
       }
     }
+  }
+
+  .info {
+    position: relative;
+    margin: 0;
+    font-size: 24px;
+    line-height: 30px;
+    text-align: center;
+    color: #93FFFF;
   }
 
   .btn-group {
@@ -586,5 +745,13 @@ export default {
       }
     }
   }
+
+  .btn-group2 {
+    justify-content: center;
+  }
+}
+
+.small-prepare-page {
+  overflow: hidden;
 }
 </style>

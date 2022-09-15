@@ -8,6 +8,14 @@ const URL = {
   submitAnswer: '/usr/question/submitAnswer.do',
   findRecentRecord: '/usr/room/findRecentRecord.do',
   getLastScore: '/usr/question/getLastScore.do',
-  ws: '/usr/ws' // websocket地址
+  joinRoomAndCamp: '/usr/room/joinRoomAndCamp.do',
+  robotJoin: '/usr/room/robotJoin.do',
+  claim: '/usr/lottery/claim.do',
+  startLottery: '/usr/lottery/startLottery.do',
+  findCity: '/usr/shop/findCity.do',
+  findShop: '/usr/shop/findShop.do',
+  saveSubscribe: '/usr/shop/saveSubscribe.do',
+  findLotteryRecord: '/usr/lottery/findLotteryRecord.do',
+  ws: '/wss/usr/ws' // websocket地址
 }
 export default URL

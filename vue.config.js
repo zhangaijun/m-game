@@ -4,23 +4,6 @@ const path = require('path')
 module.exports = {
   runtimeCompiler: true,
   publicPath: '/',
-  css: {
-    loaderOptions: {
-      postcss: {
-        plugins: [
-          require('postcss-pxtorem')({
-            rootValue: 75, // 换算的基数 Vant 官方根字体大小是 37.5
-            propList: ['*'], // Use wildcard * to enable all properties
-            selectorBlackList: ['.norem'], // ignore and leave as px
-            exclude: /node_modules/
-          })
-        ]
-      }
-    }
-  },
-  // css: {
-  //   extract: false,
-  // },
   configureWebpack: {
     output: {
       library: 'm-game',

@@ -28,19 +28,9 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/volume/volumeOneStart.vue')
   },
   {
-    path: '/waitTime',
-    name: 'waitTime',
-    component: () => import(/* webpackChunkName: "about" */ '../views/waitTime/waitTime.vue')
-  },
-  {
     path: '/chooseGroup',
     name: 'chooseGroup',
     component: () => import(/* webpackChunkName: "about" */ '../views/volume/chooseGroup.vue')
-  },
-  {
-    path: '/start',
-    name: 'Start',
-    component: () => import(/* webpackChunkName: "start" */ '../views/game/start.vue')
   },
   {
     path: '/prepare',
@@ -53,10 +43,25 @@ const routes = [
     component: () => import(/* webpackChunkName: "answer" */ '../views/game/answer.vue')
   },
   {
-    path: '/result',
-    name: 'Result',
-    component: () => import(/* webpackChunkName: "result" */ '../views/game/result.vue')
-  }
+    path: '/gameOver',
+    name: 'gameOver',
+    component: () => import(/* webpackChunkName: "about" */ '../views/waitTime/gameOver.vue')
+  },
+  {
+    path: '/judgePrize',
+    name: 'judgePrize',
+    component: () => import(/* webpackChunkName: "about" */ '../views/judgePrize/judgePrize.vue')
+  },
+  {
+    path: '/ending',
+    name: 'Ending',
+    component: () => import(/* webpackChunkName: "ending" */ '../views/game/ending.vue')
+  },
+  {
+    path: '/lottery',
+    name: 'Lottery',
+    component: () => import(/* webpackChunkName: "lottery" */ '../views/game/lottery.vue')
+  },
 ]
 
 const router = new VueRouter({

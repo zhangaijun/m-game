@@ -40,18 +40,20 @@ export default {
   right: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
+  background: rgba(5,40,82,0.7);
 
   .content {
     position: relative;
-    width: 750px;
-    height: 753px;
-    padding: 160px 150px 210px 160px;
+    width: 650px;
+    height: 526px;
+    padding: 80px 100px 110px 110px;
 
     .content-bg {
       position: absolute;
       top: 0;
       left: 0;
-      width: 750px;
+      width: 650px;
     }
   }
 }

@@ -8,11 +8,13 @@ export default new Vuex.Store({
     return {
       token: '',
       userInfo: {}, // 登录用户信息
-      userId: '1020897925', // 用户id
-      nickname: '13156425612', // 用户昵称
+      userId: '1020030716', // 用户id
+      nickname: '17863931610', // 用户昵称
       avatar: '', // 用户头像
       consList: [], // 反对阵营
       prosList: [], // 拥护阵营
+      isPlay: false, // 背景音乐是否播放
+      isRecover: false, // 背景音乐是否恢复播放
     }
   },
   mutations: {
@@ -42,7 +44,15 @@ export default new Vuex.Store({
 
     SET_PROSLIST(state, val) {
       state.prosList = val
-    }
+    },
+
+    SET_ISPLAY(state, val) {
+      state.isPlay = val
+    },
+
+    SET_ISRECOVER(state, val) {
+      state.isRecover = val
+    },
   },
   actions: {
     setToken(content, data) {
@@ -72,6 +82,14 @@ export default new Vuex.Store({
     setProsList(content, data) {
       content.commit('SET_PROSLIST', data)
     },
+
+    setIsPlay(content, data) {
+      content.commit('SET_ISPLAY', data)
+    },
+
+    setIsRecover(content, data) {
+      content.commit('SET_ISRECOVER', data)
+    }
   },
   getters: {
     getToken(state) {
@@ -101,6 +119,14 @@ export default new Vuex.Store({
     getProsList(state) {
       return state.prosList
     },
+
+    getIsPlay(state) {
+      return state.isPlay
+    },
+
+    getIsRecover(state) {
+      return state.isRecover
+    }
   },
   modules: {
     // dragStore,

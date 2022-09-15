@@ -38,12 +38,13 @@ export default {
 
     share() {
       instance.initDeviceReady().then(() => {
+        console.log('process.NODE_ENV-=-=-=-=-=', process.NODE_ENV)
         instance.upShareModule.showShareView({
           // platformType: 'QQ',
-          title: '一起来升级打怪',
-          desc: '定制智慧家 就找三翼鸟',
-          url: 'https://yx.rrskjfw.com.cn',
-          thumImage: 'https://cdn09.ehaier.com/shunguang/H5/www/img/sgmobile/sybird_logo.png',
+          title: '三翼鸟智慧生活启示录',
+          desc: '原创剧本全网首发，科技style剧本游戏来了',
+          url: process.NODE_ENV !== 'production' ? 'https://yx.rrskjfw.com.cn/' : 'https://syn.rrskjfw.com.cn/',
+          thumImage: 'https://rrskj.oss-cn-qingdao.aliyuncs.com/syn/img.png',
           shareType: 'webPage',
           image: '',
         }).then((result) => {
@@ -67,6 +68,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 999;
 
   img {
     width: 80px;

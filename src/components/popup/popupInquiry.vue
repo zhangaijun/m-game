@@ -6,13 +6,12 @@
         :close-on-click-overlay="false"
     >
       <div class="popup-content">
-        <div class="popup-content-close" @click="handleConfirm"></div>
+        <div class="popup-content-close" @click="handleCancel"></div>
         <div class="popup-content-text" v-if="text">
           {{ text }}
         </div>
         <div class="popup-content-text" v-else>
-          欢迎你，三维世界的人类朋友~
-          请选择你的阵营，完成6道问答，抽精美家装礼！还可预约免费体验三翼鸟沉浸式剧本游戏！加油吧！
+          {{ !mode ? '欢迎你，三维世界的人类朋友。你将拥护AI或是反AI？请选择你的阵营，完成6道答题。沉浸式体验智慧家生活，加油吧！' : '欢迎你，三维世界的人类朋友。你将拥护AI还是反AI？请选择你的阵营，完成6道答题。即可参与抽奖赢千元好礼，加油吧！' }}
         </div>
         <div class="popup-content-btn" @click="handleConfirm">
           {{btnText}}
@@ -43,8 +42,15 @@ export default {
       type: String,
       default: '确定'
     },
+    mode: {
+      type: Number,
+      default: 0
+    }
   },
   methods:{
+    handleCancel() {
+      this.$emit('update:show', false)
+    },
     handleConfirm(){
       this.$emit('handleConfirm',{})
     }

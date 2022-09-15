@@ -1,18 +1,15 @@
 <template>
   <div class="wait" :class=" pageType === 1 ?'model1':'model2'">
     <NavigationBar />
-    <!-- <div class="wait-top">
-      <div class="wait-top-back" @click="$router.go(-1)"></div>
-      <div class="wait-top-share"></div>
-    </div> -->
+    <PlayIcon />
     <div class="wait-title">
       <div class="wait-title-top">《智慧生活启示录》</div>
       <div class="wait-title-btm">终极密卷</div>
     </div>
     <div class="wait-model"></div>
     <div class="wait-content">
-      <div class="wait-content-lft" @click="handleSelectGroup(0)"></div>
-      <div class="wait-content-rgt" @click="handleSelectGroup(1)"></div>
+      <div :class="['wait-content-lft', userSelect === 0 && 'wait-content-lftchoose']" @click="handleSelectGroup(0)"></div>
+      <div :class="['wait-content-rgt', userSelect === 1 && 'wait-content-rgtchoose']" @click="handleSelectGroup(1)"></div>
       <div class="wait-content-text">
         <span style="transform: translate(10px,10px);display: inline-block">V</span>
         <span style="transform: translate(2px,30px);display: inline-block">S</span>
@@ -22,23 +19,28 @@
       <div class="wait-button-center" @click="handleConfirm">确定</div>
     </div>
     <popup-inquiry :show="showInquiry" @handleHidden="showInquiry = false" :text="popupText" @handleConfirm="showInquiry = false"></popup-inquiry>
+    <ErrorDialog :show.sync="errorShow" :text="errorText"></ErrorDialog>
   </div>
 </template>
 
 <script>
 import popupInquiry from "../../components/popup/popupInquiry";
 import NavigationBar from '../../components/navigationBar.vue'
+import ErrorDialog from '../../components/errorDialog.vue'
+import PlayIcon from '../../components/playIcon.vue'
 import * as request from '../../api/service/game'
 
 export default {
   name: "chooseGroup",
-  components:{popupInquiry, NavigationBar},
+  components:{popupInquiry, NavigationBar, ErrorDialog, PlayIcon},
   data(){
     return{
       pageType:1,
       userSelect: null,
       showInquiry:false,
-      popupText:'请选择一方阵营！'
+      popupText:'请选择一方阵营！',
+      errorText: '',
+      errorShow: false
     }
   },
   mounted() {
@@ -53,28 +55,32 @@ export default {
         this.showInquiry = true
         return false
       }
-      const params = {
+      let params = {
         memberId: this.$store.getters['getUserId'],
         memberName: this.$store.getters['getNickname'],
-        roomId: this.$route.query.roomId,
         type: this.userSelect
       }
-      request.joinCamp(params).then(res => {
+
+      if (this.$route.query.mode === '0') params.roomId = this.$route.query.roomId
+      const fn = this.$route.query.mode === '0' ? request.joinCamp : request.joinRoomAndCamp
+      fn(params).then(res => {
         if (!res.data.success) {
-          console.log(res.data.error)
+          this.errorText = res.data.error
+          this.errorShow = true
           return
         }
-
+        
         this.$router.push({
           path: '/prepare',
           query: {
-            roomId: this.$route.query.roomId,
+            roomId: this.$route.query.mode === '0' ? this.$route.query.roomId : res.data.result,
             type: this.userSelect,
-            mode: this.$route.mode
+            mode: this.$route.query.mode
           }
         })
       }).catch(() => {
-        console.log('网络异常，请稍后重试')
+        this.errorText = '网络异常，请稍后重试'
+        this.errorShow = true
       }) 
     }
   }
@@ -83,10 +89,10 @@ export default {
 
 <style lang="scss" scoped>
 .model1{
-  background: url("../../assets/pageGround/page4.jpg") no-repeat;
+  background: url("../../assets/imgs/game/bg_2.png") no-repeat;
 }
 .model2{
-  background: url("../../assets/pageGround/page3.jpg") no-repeat;
+  background: url("../../assets/imgs/game/bg_1.png") no-repeat;
 }
 .wait {
   width: 100%;
@@ -97,25 +103,6 @@ export default {
   align-items: center;
   padding-top: 100px;
   overflow: hidden;
-  &-top{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4% 10% 0;
-    &-back{
-      width: 70px;
-      height: 70px;
-      background: url("../../assets/icon/back.png") no-repeat;
-      background-size: 100% 100%;
-    }
-    &-share{
-      width: 70px;
-      height: 70px;
-      background: url("../../assets/icon/share.png") no-repeat;
-      background-size: 100% 100%;
-    }
-  }
   &-title{
     width: 100%;
     text-align: center;
@@ -160,10 +147,30 @@ export default {
       padding-right: 9%;
       padding-top: 10%;
       box-sizing: border-box;
+      background: url("../../assets/button/button9.png") no-repeat;
+      background-size: 100% 100%;
+    }
+    &-lftchoose {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      padding-right: 9%;
+      padding-top: 10%;
+      box-sizing: border-box;
       background: url("../../assets/button/button7.png") no-repeat;
       background-size: 100% 100%;
     }
     &-rgt{
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      padding-left: 9%;
+      padding-top: 10%;
+      box-sizing: border-box;
+      background: url("../../assets/button/button8.png") no-repeat;
+      background-size: 100% 100%;
+    }
+    &-rgtchoose{
       width: 50%;
       display: flex;
       flex-direction: column;

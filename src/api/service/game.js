@@ -84,3 +84,75 @@ export const getLastScore = (params) => {
     params,
   })
 }
+
+// 加入房间和阵营
+export const joinRoomAndCamp = (data) => {
+  return request({
+    url: process.env.VUE_APP_BASE_URL+ url.joinRoomAndCamp,
+    method: 'post',
+    data,
+  })
+}
+
+// 机器人加入
+export const robotJoin = (data) => {
+  return request({
+    url: process.env.VUE_APP_BASE_URL+ url.robotJoin,
+    method: 'post',
+    data,
+  })
+}
+
+// 保存奖品领取信息
+export const claim = (data) => {
+  return request({
+    url: process.env.VUE_APP_BASE_URL+ url.claim,
+    method: 'post',
+    data,
+  })
+}
+
+// 抽奖
+export const startLottery = (data) => {
+  return request({
+    url: process.env.VUE_APP_BASE_URL+ url.startLottery,
+    method: 'post',
+    data,
+  })
+}
+
+// 查询城市
+export const findCity = (params) => {
+  return request({
+    url: process.env.VUE_APP_BASE_URL+ url.findCity,
+    method: 'get',
+    params,
+  })
+}
+
+// 获取店铺
+export const findShop = (params) => {
+  return request({
+    url: process.env.VUE_APP_BASE_URL+ url.findShop,
+    method: 'get',
+    params,
+  })
+}
+
+// 保存预约信息
+export const saveSubscribe = (data) => {
+  return request({
+    url: process.env.VUE_APP_BASE_URL+ url.saveSubscribe,
+    method: 'post',
+    data,
+  })
+}
+
+// 获取店铺
+export const findLotteryRecord = (params) => {
+  return request({
+    url: process.env.VUE_APP_BASE_URL+ url.findLotteryRecord,
+    method: 'get',
+    params,
+  })
+}

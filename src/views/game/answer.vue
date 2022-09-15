@@ -1,7 +1,8 @@
 <template>
   <div class="answer-page">
     <img class="bg" src="../../assets/imgs/game/bg_2.png" />
-    <NavigationBar />
+    <NavigationBar :isBack="false" />
+    <PlayIcon />
     <div class="title">
       <p class="title-top">《智慧生活启示录》</p>
       <p class="title-bottom">终极密卷</p>
@@ -23,12 +24,15 @@
           <img class="icon" src="../../assets/imgs/game/star.png" />
           <span class="contra-score">{{ consScore }}</span>
         </div>
-
+        
         <div class="content-top">
           <div class="top-left">
             <div class="top-item left-item" v-for="item in prosList" :key="item.memberId">
               <div class="item-img">
-                <img class="img-bg" src="../../assets/imgs/game/img_bg_1.png" />              
+                <img class="img-bg" src="../../assets/imgs/game/img_bg_1.png" />
+                <img class="img" v-if="item.avatar == 1" src="../../assets/imgs/game/pros_img_1.jpg" />
+                <img class="img" v-if="item.avatar == 2" src="../../assets/imgs/game/pros_img_2.jpg" />
+                <img class="img" v-if="item.avatar == 3" src="../../assets/imgs/game/pros_img_3.jpg" />             
               </div>
               <div class="item-score">
                 <img class="score-bg" src="../../assets/imgs/game/left_score.png" />
@@ -38,12 +42,20 @@
             </div>
           </div>
 
-          <div class="top-content">{{ question.quesTitle }}</div>
+          <div class="top-content">
+            <template v-if="question && question.quesTitle">
+              <p class="content-title">{{ '第' + indexText[questionIndex] + '题' }}</p>
+              <p class="content-text">{{ question.quesTitle }}</p>
+            </template>
+          </div>
 
           <div class="top-right">
             <div class="top-item right-item" v-for="item in consList" :key="item.memberId">
               <div class="item-img">
                 <img class="img-bg" src="../../assets/imgs/game/img_bg_1.png" />
+                <img class="img" v-if="item.avatar == 1" src="../../assets/imgs/game/cons_img_1.jpg" />
+                <img class="img" v-if="item.avatar == 2" src="../../assets/imgs/game/cons_img_2.jpg" />
+                <img class="img" v-if="item.avatar == 3" src="../../assets/imgs/game/cons_img_3.jpg" />
               </div>
               <div class="item-score">
                 <img class="score-bg" src="../../assets/imgs/game/right_score.png" />
@@ -54,12 +66,12 @@
           </div>
         </div>
 
-        <div class="content-bottom">
+        <div class="content-bottom"  v-if="!msgShow && !infoShow && question">
           <div class="bottom-item" v-for="item in question.optionList" :key="item.id">
             <div class="item-btn" @click="chooseItem(item)">
               <img v-if="!choose || choose !== item.optionAnswer" class="btn-bg" src="../../assets/imgs/common/big_btn.png" />
               <img v-if="choose && choose === item.optionAnswer && choose !== question.rightAnswer" class="big-btn-bg" src="../../assets/imgs/game/error_btn.png" />
-              <img v-if="choose && choose === item.optionAnswer && choose === question.rightAnswer" class="big-btn-bg" src="../../assets/imgs/game/correct_btn.png" />
+              <img v-if="choose && item.optionAnswer === question.rightAnswer" class="big-btn-bg" src="../../assets/imgs/game/correct_btn.png" />
               <span class="btn-text">{{ item.optionStr }}</span>
             </div>
 
@@ -81,30 +93,41 @@
       <p class="info-main">得分X2</p>
       <p class="info-text">不要错过哦~</p>
 
-      <div class="info-btn" @click="confirm">
+      <!-- <div class="info-btn" @click="confirm">
         <img class="btn-bg" src="../../assets/imgs/common/big_btn.png" />
         <span class="btn-text">确定</span>
-      </div>
+      </div> -->
     </Dialog>
 
     <Dialog :show="msgShow">
       <p class="info-text">{{msg}}</p>
     </Dialog>
+
+    <ErrorDialog :show.sync="errorShow" :text="errorText"></ErrorDialog>
   </div>
 </template>
 
 <script>
 import NavigationBar from '../../components/navigationBar.vue'
 import Dialog from '../../components/dialog.vue'
+import ErrorDialog from '../../components/errorDialog.vue'
+import PlayIcon from '../../components/playIcon.vue'
 import * as request from '../../api/service/game'
 import Url from '../../api/url'
+import util from '../../util/util'
+import UplusApi from '@uplus/uplus-api'
+
+const instance = new UplusApi()
+instance.initDeviceReady()
 
 export default {
   name: 'Answer',
 
   components: {
     [NavigationBar.name]: NavigationBar,
-    [Dialog.name]: Dialog
+    [Dialog.name]: Dialog,
+    [ErrorDialog.name]: ErrorDialog,
+    PlayIcon
   },
 
   data() {
@@ -116,6 +139,7 @@ export default {
       prosList: this.$store.getters.getProsList, // 拥护阵营
       questionList: [],
       questionIndex: 0, // 题目序号
+      indexText: ['一', '二', '三', '四', '五', '六'],
       question: {},
       choose: '',
 
@@ -132,6 +156,8 @@ export default {
       msgShow: false,
       msg: '',
       correctId: '',
+      errorText: '',
+      errorShow: false
     }
   },
 
@@ -148,6 +174,7 @@ export default {
     this.initWebSocket()
     this.findQues()
     this.countdown(5, true)
+    this.btForBack()
   },
 
   destroyed() {
@@ -156,6 +183,20 @@ export default {
   },  
 
   methods: {
+    btForBack() {
+      if (util.isAndroid()) {
+        instance.initDeviceReady().then(() => {
+          instance.androidPhysicalBtForBack({
+            process: true,
+            deviceChangeListener: () => {
+              this.reset()
+            },
+            eventKey: 'backEvent'
+          });
+        }).catch(e => { console.log(e) });
+      }
+    },
+
     countdown(time, flag) {
       this.time = time
       if (flag) this.countdownShow = true
@@ -166,11 +207,12 @@ export default {
         if (this.time <= 0) {
           clearInterval(this.interval)
           if (flag) {
+            if (!this.questionList.length) return
             this.countdownShow = false
-            this.countdown(30)
+            this.countdown(15)
           } else {
             if (!this.choose) this.msg = '您的手速慢了，再接再厉'
-            this.toNext()
+            this.toNext(1)
           }
         }
       }, 1000)
@@ -179,14 +221,16 @@ export default {
     findQues() {
       request.findQues({ roomId: this.$route.query.roomId }).then(res => {
         if (!res.data.success) {
-          console.log(res.data.error)
+          this.errorText = res.data.error
+          this.errorShow = true
           return
         }
 
         this.questionList = res.data.result
         this.question = this.questionList[this.questionIndex]
       }).catch(() => {
-        console.log('网络异常，请稍后重试')
+        this.errorText = '网络异常，请稍后重试'
+        this.errorShow = true
       })  
     },
 
@@ -200,15 +244,16 @@ export default {
       if (this.choose === this.question.rightAnswer && this.correctId) {
         this.msg = '您的手速慢了，再接再厉'
       }
-
+      
       const params = {
         answer: this.choose,
         camp: Number(this.$route.query.type),
-        doubleScore: 0, // 是否双倍积分 0-否 1-是
+        doubleScore: this.question.doubleScore ? 1 : 0, // 是否双倍积分 0-否 1-是
         memberId: this.$store.getters['getUserId'],
         memberName: this.$store.getters.getNickname,
         quesId: this.question.id,
-        roomId: Number(this.$route.query.roomId)
+        roomId: Number(this.$route.query.roomId),
+        haveRobot: Number(this.$route.query.haveRobot)
       }
       request.submitAnswer(params).then(res => {
         if (!res.data.success) {
@@ -220,64 +265,65 @@ export default {
       })  
     },
 
-    toNext() {
+    toNext(index) {
+      console.log('index-=-=-=-=-=', index)
       this.choose = ''
       this.questionIndex++
       this.question = this.questionList[this.questionIndex]
-
-      if (!this.question) {
-        this.goTo()
-        return
-      }
-
       this.prosScore = this.prosTotalScore
       this.consScore = this.consTotalScore
+      console.log('第' + this.questionIndex + '题-=-=-=-=-=-=-', this.questionIndex)
 
       this.msgShow = true
+      clearInterval(this.interval)
       setTimeout(() => {
         this.msgShow = false
+        if (!this.question) {
+          this.goTo()
+          return
+        }
         if (this.question.doubleScore) {
           this.infoShow = true
+          clearTimeout(this.timer)
+          this.timer = setTimeout(() => {
+            this.infoShow = false
+            clearInterval(this.interval)
+            this.$nextTick(() => {
+              this.countdown(15)
+            })
+          }, 2000)
         } else {
           clearInterval(this.interval)
           this.$nextTick(() => {
-            this.countdown(30)
+            this.countdown(15)
           })
         }
       }, 2000)
-
-      this.timer = setTimeout(() => {
-        this.infoShow = false
-        clearInterval(this.interval)
-        this.$nextTick(() => {
-          this.countdown(30)
-        })
-      }, 4000)
     },
 
     confirm() {
       clearTimeout(this.timer)
       clearInterval(this.interval)
+      this.infoShow = false
       this.$nextTick(() => {
-        this.countdown(30)
+        this.countdown(15)
       })
     },
 
     goTo() {
-      this.websocketOnclose()
       clearInterval(this.interval)
 
       this.$router.push({
-        path: '/result',
+        path: '/gameOver',
         query: {
           roomId: this.$route.query.roomId,
+          mode: this.$route.query.mode
         }
       })
       this.reset()
     },
 
     initWebSocket() {
-      // console.log("开始WebSocket连接...")
       // WebSocket与普通的请求所用协议有所不同，ws等同于http，wss等同于https
       var userId = this.$store.getters['getUserId']
       if (userId && !this.lockReconnect) {
@@ -297,9 +343,6 @@ export default {
       console.log('WebSocket连接成功')
     },
     websocketOnerror() {
-      console.log('websocket-=-=-===error')
-      this.lockReconnect = false
-      this.reconnect()
     },
     websocketOnclose() {
       console.log('websocket-=-=-===close')
@@ -324,13 +367,14 @@ export default {
       }, 10000)
     },
     websocketOnmessage(msg) {
+      if (!this.isInit) return
       this.lockReconnect = true
       const data = JSON.parse(msg.data)
       // 阵营总分
       this.prosTotalScore = data.prosTotalScore
       this.consTotalScore = data.consTotalScore
       // 得分人的id
-      this.correctId = data.rightAnswerMemberId
+      if(data.quesId === this.question.quesId) this.correctId = data.rightAnswerMemberId
       console.log('websocket-=-=-=-=-=data2', data)
       
       // 更新个人分数
@@ -348,7 +392,7 @@ export default {
 
       // 得分的人
       if (this.correctId == this.$store.getters['getUserId']) {
-        this.msg = '恭喜您最快答对，获得20积分'
+        this.msg = `恭喜您最快答对，获得${this.question.doubleScore ? 2 : 1}积分`
       }
 
       // 答对但未得分的人
@@ -356,9 +400,7 @@ export default {
         this.msg = '您的手速慢了，再接再厉'
       }
       
-      // 打本模式6个人答完或者游客模式两个人答完
-      // if ((this.$route.query.mode === '0' && data.detail.length >= 6) || (this.$route.query.mode === '0' && data.detail.length >= 2)) this.toNext()
-      if (data.detail.length >= 6) this.toNext()
+      if (data.answerOver && data.quesId === this.question.quesId) this.toNext(2)
       this.heartCheckFun()
     },
 
@@ -394,6 +436,7 @@ export default {
     top: 0;
     left: 0;
     width: 750px;
+    min-height: 100vh;
   }
 
   .title {
@@ -535,7 +578,16 @@ export default {
             left: 0;
             width: 114px;
           }
-       }
+
+          .img {
+            position: absolute;
+            top: 13px;
+            left: 13px;
+            width: 88px;
+            height: 81px;
+            border-radius: 50%;
+          }
+      }
 
         .item-score {
           position: absolute;
@@ -574,9 +626,22 @@ export default {
         flex: 1;
         height: 420px;
         padding: 40px 40px 40px 0;
-        font-size: 32px;
-        line-height: 40px;
-        color: #fff;
+
+        .content-title {
+          margin: 0;
+          font-size: 36px;
+          line-height: 48px;
+          text-align: center;
+          color: #fff;
+        }
+
+        .content-text {
+          margin: 0;
+          padding-top: 14px;
+          font-size: 32px;
+          line-height: 40px;
+          color: #fff;
+        }
       }
     }
 
@@ -664,6 +729,7 @@ export default {
     .info-text {
       position: relative;
       margin: 0;
+      padding-top: 100px;
       font-size: 33px;
       line-height: 40px;
       text-align: center;
